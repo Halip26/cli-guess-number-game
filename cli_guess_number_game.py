@@ -1,19 +1,23 @@
 import random
 
-number = random.randint(1, 99)
-name = input("\nEnter your name: ")
-max_attempts = int(input("Enter attempt that you want: "))
+max_attempts = 10
 attempts = 0
+number = random.randint(1, 99)
+
+print("--- Welcome to Guess the Number Game! ---")
+name = input("What is your name: ")
+print(f"Hello {name} You have {max_attempts} attempts to guess")
 
 while attempts < max_attempts:
-    guess = int(input("Enter a number from 1 to 99: "))
+    guess = int(input("\nGuess the number from 1 to 99: "))
+    print("-" * 35)
 
     if guess < number:
-        print("Your guess is low")
+        print(f"Your guess is low {name}")
     elif guess > number:
-        print("Your guess is high")
+        print(f"Your guess is high {name}")
     else:
-        print(f"Congratulations {name}! You guessed it!")
+        print(f"Congratulations {name} You guessed it!")
         break
 
     attempts += 1
