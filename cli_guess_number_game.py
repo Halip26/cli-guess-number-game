@@ -25,9 +25,8 @@ while attempts < max_attempts:
 else:
     print(f"Out of attempts, You Lost. The number was {number}")
 
-
-# The simple one
 """
+# The simple one
 import random
 
 number = random.randint(1, 99)
