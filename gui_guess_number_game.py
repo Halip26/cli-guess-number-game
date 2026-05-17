@@ -23,33 +23,50 @@ BLACK = (0, 0, 0)
 
 # Init
 pygame.init()
-# Optional: use SCALED to help DPI on some systems, remove if it causes blur
-screen = pygame.display.set_mode((WIDTH, HEIGHT), pygame.SCALED)
+screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("Guess the Number Game by Mr. Halip")
 clock = pygame.time.Clock()
 
-# Optional music
-try:
-    pygame.mixer.init()
-    music_path = "music/retro-game-music-245230.mp3"
-    if os.path.exists(music_path):
-        pygame.mixer.music.load(music_path)
-        pygame.mixer.music.set_volume(0.1)
-        pygame.mixer.music.play(-1)
-except Exception:
-    pass
+# Optional: lihat daftar font sistem (uncomment untuk debug)
+# pygame.font.init()
+# print("Available system fonts:", pygame.font.get_fonts())
 
-# Use pygame.font
-pygame.font.init()
-# If you have a local TTF file, you can load it with pygame.font.Font("path/to.ttf", size)
-# Otherwise SysFont will pick a system font
-title_font = pygame.font.SysFont("Segoe UI", 24, bold=True)
-subtitle_font = pygame.font.SysFont("Segoe UI", 14)
-desc_font = pygame.font.SysFont("Segoe UI", 12)
-input_font = pygame.font.SysFont("Segoe UI", 20)
-result_font = pygame.font.SysFont("Segoe UI", 16)
-attempts_font = pygame.font.SysFont("Segoe UI", 12, italic=True)
-footer_font = pygame.font.SysFont("Segoe UI", 10)
+
+# --- FONT LOADING STRATEGY ---
+# 1) Coba muat file TTF lokal jika ada
+# 2) Jika tidak ada, fallback ke SysFont dengan nama populer
+def load_font(
+    preferred_ttf_path, size, fallback_name="arial", bold=False, italic=False
+):
+    """
+    Mengembalikan objek pygame.font.Font atau pygame.font.SysFont.
+    preferred_ttf_path: path ke file .ttf yang ingin dipakai (string)
+    size: ukuran font (int)
+    fallback_name: nama font sistem jika file tidak ditemukan
+    """
+    try:
+        if preferred_ttf_path and os.path.exists(preferred_ttf_path):
+            return pygame.font.Font(preferred_ttf_path, size)
+    except Exception:
+        pass
+    # fallback ke SysFont
+    return pygame.font.SysFont(fallback_name, size, bold=bold, italic=italic)
+
+
+# Contoh: letakkan Roboto-Regular.ttf di folder "fonts/Roboto-Regular.ttf"
+base_folder = os.path.dirname(__file__) if "__file__" in globals() else os.getcwd()
+roboto_path = os.path.join(
+    base_folder, "fonts", "Roboto-Medium.ttf"
+)  # ubah sesuai lokasi TTF
+
+# Buat font dengan prioritas TTF lokal, lalu fallback ke Arial
+title_font = load_font(roboto_path, 24, fallback_name="arial", bold=True)
+subtitle_font = load_font(roboto_path, 14, fallback_name="arial")
+desc_font = load_font(roboto_path, 12, fallback_name="arial")
+input_font = load_font(roboto_path, 20, fallback_name="arial")
+result_font = load_font(roboto_path, 16, fallback_name="arial")
+attempts_font = load_font(roboto_path, 12, fallback_name="arial")
+footer_font = load_font(roboto_path, 10, fallback_name="arial")
 
 
 # Game state
@@ -108,7 +125,7 @@ while running:
         if event.type == pygame.KEYDOWN and not game_over:
             if event.key == pygame.K_RETURN:
                 raw = input_text.strip()
-                input_text = ""  # clear immediately
+                input_text = ""
                 if raw == "":
                     result_message = "No input provided. Enter a number."
                     result_color = MUTED
@@ -186,7 +203,6 @@ while running:
     subtitle_text = "by Mr. Halip"
     desc_text = f"Guess the secret number between {MIN_VAL} and {MAX_VAL}. Enter a number and press Guess."
 
-    # Render with antialias True and integer positions
     title_surf = title_font.render(title_text, True, ACCENT)
     screen.blit(title_surf, (int(top_card_rect.x + 16), int(top_card_rect.y + 12)))
 
@@ -212,7 +228,6 @@ while running:
     )
 
     pygame.draw.rect(screen, BLACK, input_box_rect, 2, border_radius=4)
-    # center vertically using integer math
     input_surface = input_font.render(input_text, True, TEXT)
     input_y = (
         input_box_rect.y + (input_box_rect.height - input_surface.get_height()) // 2
