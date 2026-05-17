@@ -1,5 +1,4 @@
 import pygame
-import pygame.freetype as freetype
 import random
 import sys
 import os
@@ -7,7 +6,7 @@ import os
 # Config
 MIN_VAL = 1
 MAX_VAL = 100
-WIDTH, HEIGHT = 460, 640
+WIDTH, HEIGHT = 360, 640
 FPS = 30
 
 # Colors
@@ -24,7 +23,7 @@ BLACK = (0, 0, 0)
 
 # Init
 pygame.init()
-# Use SCALED to improve DPI handling on high-DPI displays
+# Optional: use SCALED to help DPI on some systems, remove if it causes blur
 screen = pygame.display.set_mode((WIDTH, HEIGHT), pygame.SCALED)
 pygame.display.set_caption("Guess the Number Game by Mr. Halip")
 clock = pygame.time.Clock()
@@ -40,15 +39,17 @@ try:
 except Exception:
     pass
 
-# Use freetype for crisper text
-freetype.init()
-title_font = freetype.SysFont("Segoe UI", 22, bold=True)
-subtitle_font = freetype.SysFont("Segoe UI", 14)
-desc_font = freetype.SysFont("Segoe UI", 12)
-input_font = freetype.SysFont("Segoe UI", 20)
-result_font = freetype.SysFont("Segoe UI", 16)
-attempts_font = freetype.SysFont("Segoe UI", 12, italic=True)
-footer_font = freetype.SysFont("Segoe UI", 10)
+# Use pygame.font
+pygame.font.init()
+# If you have a local TTF file, you can load it with pygame.font.Font("path/to.ttf", size)
+# Otherwise SysFont will pick a system font
+title_font = pygame.font.SysFont("Segoe UI", 24, bold=True)
+subtitle_font = pygame.font.SysFont("Segoe UI", 14)
+desc_font = pygame.font.SysFont("Segoe UI", 12)
+input_font = pygame.font.SysFont("Segoe UI", 20)
+result_font = pygame.font.SysFont("Segoe UI", 16)
+attempts_font = pygame.font.SysFont("Segoe UI", 12, italic=True)
+footer_font = pygame.font.SysFont("Segoe UI", 10)
 
 
 # Game state
@@ -180,86 +181,95 @@ while running:
     pygame.draw.rect(screen, CARD_COLOR, mid_card_rect, border_radius=6)
     pygame.draw.rect(screen, CARD_COLOR, bottom_card_rect, border_radius=6)
 
-    # Top card content (use render_to for crisper text)
+    # Top card content
     title_text = "Guess the Number Game"
     subtitle_text = "by Mr. Halip"
     desc_text = f"Guess the secret number between {MIN_VAL} and {MAX_VAL}. Enter a number and press Guess."
 
-    # integer positions for sharp rendering
-    title_x = top_card_rect.x + 16
-    title_y = top_card_rect.y + 12
-    title_font.render_to(screen, (title_x, title_y), title_text, ACCENT)
+    # Render with antialias True and integer positions
+    title_surf = title_font.render(title_text, True, ACCENT)
+    screen.blit(title_surf, (int(top_card_rect.x + 16), int(top_card_rect.y + 12)))
 
-    subtitle_y = title_y + 28
-    subtitle_font.render_to(screen, (title_x, subtitle_y), subtitle_text, MUTED)
+    subtitle_surf = subtitle_font.render(subtitle_text, True, MUTED)
+    screen.blit(
+        subtitle_surf,
+        (
+            int(top_card_rect.x + 16),
+            int(top_card_rect.y + 12 + title_surf.get_height() + 6),
+        ),
+    )
 
-    desc_y = top_card_rect.y + top_card_rect.height - 28
-    # wrap description manually if too long (simple approach)
-    desc_font.render_to(screen, (title_x, desc_y), desc_text, MUTED)
+    desc_surf = desc_font.render(desc_text, True, MUTED)
+    screen.blit(
+        desc_surf,
+        (int(top_card_rect.x + 16), int(top_card_rect.y + top_card_rect.height - 28)),
+    )
 
     # Mid card: input label and box
-    input_label_y = mid_card_rect.y + 12
-    desc_font.render_to(
-        screen, (mid_card_rect.x + 16, input_label_y), "Your guess", MUTED
+    input_label_surf = desc_font.render("Your guess", True, MUTED)
+    screen.blit(
+        input_label_surf, (int(mid_card_rect.x + 16), int(mid_card_rect.y + 12))
     )
 
     pygame.draw.rect(screen, BLACK, input_box_rect, 2, border_radius=4)
     # center vertically using integer math
-    input_surface_y = (
-        input_box_rect.y + (input_box_rect.height - input_font.get_sized_height()) // 2
+    input_surface = input_font.render(input_text, True, TEXT)
+    input_y = (
+        input_box_rect.y + (input_box_rect.height - input_surface.get_height()) // 2
     )
-    input_font.render_to(
-        screen, (input_box_rect.x + 8, int(input_surface_y)), input_text, TEXT
-    )
+    screen.blit(input_surface, (int(input_box_rect.x + 8), int(input_y)))
 
     # Buttons
     pygame.draw.rect(screen, ACCENT, guess_btn_rect, border_radius=6)
-    desc_font.render_to(
-        screen,
-        (guess_btn_rect.centerx - 20, guess_btn_rect.centery - 8),
-        "Guess",
-        (255, 255, 255),
+    guess_text = desc_font.render("Guess", True, (255, 255, 255))
+    screen.blit(
+        guess_text,
+        (
+            int(guess_btn_rect.centerx - guess_text.get_width() // 2),
+            int(guess_btn_rect.centery - guess_text.get_height() // 2),
+        ),
     )
 
     pygame.draw.rect(screen, (230, 233, 239), reset_btn_rect, border_radius=6)
-    desc_font.render_to(
-        screen, (reset_btn_rect.centerx - 20, reset_btn_rect.centery - 8), "Reset", TEXT
+    reset_text = desc_font.render("Reset", True, TEXT)
+    screen.blit(
+        reset_text,
+        (
+            int(reset_btn_rect.centerx - reset_text.get_width() // 2),
+            int(reset_btn_rect.centery - reset_text.get_height() // 2),
+        ),
     )
 
     # Bottom card: result
-    result_font.render_to(
-        screen,
-        (bottom_card_rect.x + 16, bottom_card_rect.y + 18),
-        result_message,
-        result_color,
+    result_surf = result_font.render(result_message, True, result_color)
+    screen.blit(
+        result_surf, (int(bottom_card_rect.x + 16), int(bottom_card_rect.y + 18))
     )
     if game_over:
         secret_line = f"The correct number was {secret}"
-        desc_font.render_to(
-            screen,
+        secret_surf = desc_font.render(secret_line, True, MUTED)
+        screen.blit(
+            secret_surf,
             (
-                bottom_card_rect.x + 16,
-                bottom_card_rect.y + 18 + result_font.get_sized_height() + 8,
+                int(bottom_card_rect.x + 16),
+                int(bottom_card_rect.y + 18 + result_surf.get_height() + 8),
             ),
-            secret_line,
-            MUTED,
         )
 
     # Attempts label top center
     attempts_text = f"Attempts: {attempts}"
-    attempts_surf_w = attempts_font.get_rect(attempts_text).width
-    attempts_font.render_to(
-        screen, (WIDTH // 2 - attempts_surf_w // 2, 20), attempts_text, MUTED
-    )
+    attempts_surf = attempts_font.render(attempts_text, True, MUTED)
+    screen.blit(attempts_surf, (int(WIDTH // 2 - attempts_surf.get_width() // 2), 20))
 
     # Footer tip
     footer_text = "Tip: Press Enter to submit"
-    footer_w = footer_font.get_rect(footer_text).width
-    footer_font.render_to(
-        screen,
-        (footer_pos[0] - footer_w // 2, footer_pos[1] - footer_font.get_sized_height()),
-        footer_text,
-        MUTED,
+    footer_surf = footer_font.render(footer_text, True, MUTED)
+    screen.blit(
+        footer_surf,
+        (
+            int(footer_pos[0] - footer_surf.get_width() // 2),
+            int(footer_pos[1] - footer_surf.get_height()),
+        ),
     )
 
     # Game over overlay
@@ -268,11 +278,9 @@ while running:
         overlay.fill((0, 0, 0, 40))
         screen.blit(overlay, (0, 0))
         go_msg = "You won! Press C to play again or Q to quit."
-        result_font.render_to(
-            screen,
-            (WIDTH // 2 - result_font.get_rect(go_msg).width // 2, HEIGHT // 2 - 10),
-            go_msg,
-            GREEN,
+        go_surf = result_font.render(go_msg, True, GREEN)
+        screen.blit(
+            go_surf, (int(WIDTH // 2 - go_surf.get_width() // 2), int(HEIGHT // 2 - 10))
         )
         keys = pygame.key.get_pressed()
         if keys[pygame.K_c]:
